@@ -1,0 +1,12 @@
+version: "2"
+services:
+  vanilla-2.3.0-sonarqube:
+    # See https://hub.docker.com/r/absolunet/sonarqube/ for all available sonarqube images
+    image: absolunet/sonarqube:6.7
+    # Do not change container_name !
+    container_name: vanilla-2.3.0-sonarqube
+    ports:
+      - 9000:9000
+      - 9092:9092
+    volumes:
+      -  ./../../../src:/srv/www

@@ -1,0 +1,159 @@
+version: "2"
+services:
+  vanilla-2.3.0-app:
+    # See https://hub.docker.com/r/absolunet/nginx/ for all available Nginx images
+    image: absolunet/nginx:1.10-xenial
+    # Do not change container_name !
+    container_name: vanilla-2.3.0-nginx
+    links:
+      - vanilla-2.3.0-phpfpm
+      - vanilla-2.3.0-db
+      - vanilla-2.3.0-elasticsearch
+    volumes_from:
+      - vanilla-2.3.0-appdata
+    ports:
+      - 80:80
+      #- 8080:8080 # port 8080 if using [image]*-varnish
+      - 443:443
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-appdata:
+    image: tianon/true
+    container_name: vanilla-2.3.0-appdata
+    volumes:
+      - ~/sparkstation/common/app/docker-bash:/var/www/.sparkcode-bash:ro
+      - ~/sparkstation/common/app/docker-bash/init:/var/www/.bashrc:ro
+      - ~/sparkstation/common/app/docker-bash/init:/root/.bashrc:ro
+      - ./conf/:/etc/nginx/conf.d/:delegated
+      - ./includes/:/etc/nginx/includes/:delegated
+      - ./magicento2/:/srv/www/pub/magicento2/:delegated
+      - ./../../../src/store/pub/build:/srv/www/pub/build:delegated
+      - ./../../../src/store/pub/styleguide:/srv/www/pub/styleguide:delegated
+      - ./../../../src/store/generated:/srv/www/generated:delegated
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-phpfpm:
+    # See https://hub.docker.com/r/absolunet/php/ for all available PHP images
+    image: absolunet/php:7.2-fpm-xenial
+    # Do not change container_name !
+    container_name: vanilla-2.3.0-phpfpm
+    links:
+      - vanilla-2.3.0-db
+      - vanilla-2.3.0-mq
+      - vanilla-2.3.0-elasticsearch
+    environment:
+      # Add all the php extensions you need that are not in the php container by default
+      # Needs to be separated by only a space
+      # Ex : CUSTOM_PHP_EXT=php7.0-json vim curl
+      - CUSTOM_PACKAGES=
+    volumes:
+      - ~/sparkstation/common/app/docker-bash:/var/www/.sparkcode-bash:ro
+      - ~/sparkstation/common/app/docker-bash/init:/var/www/.bashrc:ro
+      - ~/sparkstation/common/app/docker-bash/init:/root/.bashrc:ro
+      - ~/.ssh:/var/www/.ssh:delegated
+      - ~/sparkstation/config/composer:/var/www/.composer:delegated
+      - ./postfix/main.cf:/etc/postfix/main.cf:delegated
+      - ./../../../src/store/pub/build:/srv/www/pub/build:delegated
+      - ./../../../src/store/pub/styleguide:/srv/www/pub/styleguide:delegated
+      - ./../../../src/store/generated:/srv/www/generated:delegated
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-composer:
+    # See https://hub.docker.com/r/absolunet/php/ for all available PHP images
+    image: absolunet/php:7.2-fpm-xenial
+    # Do not change container_name !
+    container_name: vanilla-2.3.0-composer
+    links:
+      - vanilla-2.3.0-db
+      - vanilla-2.3.0-elasticsearch
+    environment:
+      # Add all the php extensions you need that are not in the php container by default
+      # Needs to be separated by only a space
+      # Ex : CUSTOM_PHP_EXT=php7.0-json vim curl
+      - CUSTOM_PACKAGES=
+    volumes:
+      - ~/sparkstation/common/app/docker-bash:/var/www/.sparkcode-bash:ro
+      - ~/sparkstation/common/app/docker-bash/init:/var/www/.bashrc:ro
+      - ~/sparkstation/common/app/docker-bash/init:/root/.bashrc:ro
+      - ~/.ssh:/var/www/.ssh:delegated
+      - ~/sparkstation/config/composer:/var/www/.composer:delegated
+      - ./../../../src/store:/srv/www:delegated
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-db:
+    image: mysql:5.7
+    # Do not change container_name !
+    container_name: vanilla-2.3.0-db
+    volumes_from:
+      - vanilla-2.3.0-dbdata
+    ports:
+      # Port mapping for the database
+      - 8001:3306
+    environment:
+      # Set your own mysql settings
+      - MYSQL_HOST=vanilla-2.3.0-db    # DB Host
+      - MYSQL_ROOT_PASSWORD=vanilla1234  # Password for root user
+      - MYSQL_DATABASE=vanilla       # Database name
+      - MYSQL_USER=vanilla           # User name
+      - MYSQL_PASSWORD=vanilla1234       # User password
+    volumes:
+      # Mounting custom mysql config (see vm/docker/mysql/custom.cnf to add your custom config)
+      - ./mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-dbdata:
+    image: tianon/true
+    container_name: vanilla-2.3.0-dbdata
+    volumes:
+      - ~/sparkstation/common/app/docker-bash:/var/www/.sparkcode-bash:ro
+      - ~/sparkstation/common/app/docker-bash/init:/var/www/.bashrc:ro
+      - ~/sparkstation/common/app/docker-bash/init:/root/.bashrc:ro
+      - /var/lib/mysql
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-mq:
+    image: rabbitmq:3-management
+    container_name: vanilla-2.3.0-mq
+    hostname: "vanilla-2.3.0-mq"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    labels:
+      NAME: "vanilla-2.3.0-mq"
+    volumes:
+      - "./enabled_plugins:/etc/rabbitmq/enabled_plugins"
+    networks:
+      - vanilla-2.3.0_network
+
+  vanilla-2.3.0-elasticsearch:
+    image: elasticsearch:5.2
+    container_name: vanilla-2.3.0-elasticsearch
+    environment:
+      - bootstrap.memory_lock=true
+      - network.publish_host = 127.0.0.1
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    volumes:
+      - /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - vanilla-2.3.0_network
+
+networks:
+  vanilla-2.3.0_network:

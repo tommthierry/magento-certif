@@ -1,0 +1,12 @@
+version: "2"
+services:
+  vanilla-2.3.0-app:
+    volumes:
+       - vanilla-2.3.0-sync:/srv/www:nocopy
+  vanilla-2.3.0-phpfpm:
+    volumes:
+       - vanilla-2.3.0-sync:/srv/www:nocopy
+
+volumes:
+  vanilla-2.3.0-sync:
+    external: true

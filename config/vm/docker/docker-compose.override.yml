@@ -1,0 +1,9 @@
+version: "2"
+services:
+  vanilla-2.3.0-appdata:
+    volumes:
+      - ./../../../src/store:/srv/www:cached
+
+  vanilla-2.3.0-phpfpm:
+    volumes:
+      - ./../../../src/store:/srv/www:cached

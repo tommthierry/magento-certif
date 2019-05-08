@@ -1,0 +1,11 @@
+version: "2"
+services:
+  vanilla-2.3.0-elk:
+    image: absolunet/stack-elk:latest
+    container_name: vanilla-2.3.0-elk
+    ports:
+      - "5601:5601"
+      - "9292:9200"
+      - "5044:5044"
+    volumes:
+      - ./data/logs/nginx:/var/log/nginx

@@ -1,0 +1,27 @@
+name: vanilla-2.3.0
+git: 'git@bitbucket.org:absolunet/NOT_APPLICABLE.git'
+platform:
+  magento2:
+    deployment:
+      type: NOT_APPLICABLE
+    domain: vanilla.local
+    path: store
+patches:
+  20170605-nativeosxprj:
+    status: preinstalled
+  20170621-prjpwd:
+    status: preinstalled
+  20180514-composer:
+    status: preinstalled
+  20180611-awscodedeploy:
+    status: preinstalled
+  20180611-privatecomposer:
+    status: preinstalled
+  20181003-convertpatches:
+    status: preinstalled
+  20181218-dockernetworks:
+    status: preinstalled
+  20181218-magentocloudid:
+    status: preinstalled
+  20190206-conversionsparkstation:
+    status: preinstalled
